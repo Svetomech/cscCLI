@@ -63,18 +63,14 @@ if not "%errorlevel%" == "0" (
 :: Choose csc version
 set cscPath=C:\Windows\Microsoft.NET
 
-echo.
-echo TARGET PLATFORM
-echo 1. 32-bit
-echo 2. 64-bit
-REM echo 3. Both
-echo.
-set /p choice=    Choose an option: 
-
-if "%choice%"=="1" (
-    set cscPath=%cscPath%\Framework
+call :Is32bitOS
+if not "%errorlevel%"=="0" (
+    call :WriteLog "Detected that 64-bit OS is running"
+    set "cscPath=%cscPath%\Framework64"
 ) else (
-    set cscPath=%cscPath%\Framework64
+    call :WriteLog "Detected that 32-bit OS is running"
+    set "cscPath=%cscPath%\Framework"
+    set "ProgramFiles(x86)=%ProgramFiles%"
 )
 
 echo.
@@ -82,15 +78,32 @@ echo FRAMEWORK VERSION
 echo 1. v2.0
 echo 2. v3.5
 echo 3. v4.0+
-if not "%choice%"=="2" echo 4. v4.5+ (C# 6.0)
-REM echo 5. All
+echo 4. v4.5+ (C# 6.0)
+echo 5. All
 echo.
 set /p choice=    Choose an option: 
 
-if "%choice%"=="1" set cscPath=%cscPath%\v2.0.50727
-if "%choice%"=="2" set cscPath=%cscPath%\v3.5
-if "%choice%"=="3" set cscPath=%cscPath%\v4.0.30319
-if "%choice%"=="4" set cscPath=C:\Program Files (x86)\MSBuild\14.0\Bin
+if "%choice%"=="1" set "cscPath=%cscPath%\v2.0.50727"
+if "%choice%"=="2" set "cscPath=%cscPath%\v3.5"
+if "%choice%"=="3" set "cscPath=%cscPath%\v4.0.30319"
+
+if "%choice%"=="4" (
+    if not "%errorlevel%"=="0" (
+        set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64"
+    ) else (
+        set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin"
+    )
+)
+
+call :GetFileNameWithoutExtension "%filePath%"
+if "%choice%"=="5" (
+    "%cscPath%\v2.0.50727\csc.exe" /out:%fileName%-Net2.0.exe "%filePath%"
+    "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%"
+    "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%"
+    "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5-win64.exe "%filePath%"
+    "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5-win32.exe "%filePath%"
+    goto Exit
+)
 
 REM TODO: Compiler options
 "%cscPath%\csc.exe" "%filePath%"
@@ -119,7 +132,22 @@ exit /b 0
 :: filePath
 :ValidateFilePath
 if not exist "%~1" set errorlevel=1
-echo %~1 | findstr /c:".cs" > nul || set errorlevel=2
+echo %~1 | find /i ".cs" > nul || set errorlevel=2
+exit /b %errorlevel%
+
+:: filePath
+:GetFileName
+set fileName=%~nx1
+exit /b %errorlevel%
+
+:: filePath
+:GetFileNameWithoutExtension
+set fileName=%~n1
+exit /b %errorlevel%
+
+::
+:Is32bitOS
+reg query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > nul || set errorlevel=1
 exit /b %errorlevel%
 
 ::
