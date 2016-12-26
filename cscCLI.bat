@@ -110,9 +110,10 @@ if "%choice%"=="5" (
     ) else (
         "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%"
     )
-    
-    goto Exit
 )
+
+if "%choice%" LEQ "0" goto Exit
+if "%choice%" GEQ "5" goto Exit
 
 REM TODO: Compiler options
 "%cscPath%\csc.exe" "%filePath%"
