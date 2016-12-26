@@ -100,8 +100,13 @@ if "%choice%"=="5" (
     "%cscPath%\v2.0.50727\csc.exe" /out:%fileName%-Net2.0.exe "%filePath%"
     "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%"
     "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%"
-    "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5-win64.exe "%filePath%"
-    "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5-win32.exe "%filePath%"
+    
+    if not "%errorlevel%"=="0" (
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%"
+    ) else (
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%"
+    )
+    
     goto Exit
 )
 
