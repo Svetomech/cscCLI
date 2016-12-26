@@ -29,18 +29,18 @@ cls
 :: Create settings directory
 if not exist "%DesiredAppDirectory%" md "%DesiredAppDirectory%"
 
-:: Read/write(once) settings
+:: Read settings
 if exist "%MainConfig%" (
     call :LoadSetting "ProductVersion" SettingsProductVersion
-) else (
-    call :SaveSetting "ProductVersion" "%ProductVersion%"
 )
 
 :: Check version
 if "%SettingsProductVersion%" GEQ "%ProductVersion%" (
     call :WriteLog "Up to date"
 ) else (
-    call :WriteLog "Outdated version"
+    call :WriteLog "Outdated version, updating now..."
+
+    call :SaveSetting "ProductVersion" "%ProductVersion%"
 )
 
 :: Handle console arguments
@@ -128,7 +128,7 @@ exit /b 0
 
 :: name, value
 :SaveSetting
-echo %~1>> "%MainConfig%"
+echo %~1    %date% %time%>> "%MainConfig%"
 echo %~2>> "%MainConfig%"
 echo.>> "%MainConfig%"
 exit /b 0
