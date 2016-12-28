@@ -1,4 +1,5 @@
 @echo off
+setlocal
 
 REM Program exit codes:
 REM 0 - everything OK
@@ -75,6 +76,7 @@ if not defined is32bit (
     set "cscPath=%cscPath%\Framework"
     
     set "ProgramFiles(x86)=%ProgramFiles%"
+    set "errorlevel=0"
 )
 
 echo.
