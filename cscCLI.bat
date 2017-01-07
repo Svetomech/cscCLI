@@ -53,7 +53,7 @@ if not defined filePath (
 )
 
 call :IsFileValid "%filePath%"
-if not "%errorlevel%" == "0" (
+if not "%errorlevel%"=="0" (
     call :WriteLog "Not a .cs file"
     goto Exit
 ) else (
