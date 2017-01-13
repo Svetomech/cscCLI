@@ -5,6 +5,7 @@ REM Program exit codes:
 REM 0 - everything OK
 REM 1 - no argument passed or file not found
 REM 2 - not a .cs file
+REM 3 - compilation error
 
 :: Debug variables
 set "me=%~n0"
@@ -103,22 +104,30 @@ if "%choice%"=="4" (
 
 call :GetFileNameWithoutExtension "%filePath%" fileName
 if "%choice%"=="5" (
-    "%cscPath%\v2.0.50727\csc.exe" /out:%fileName%-Net2.0.exe "%filePath%"
-    "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%"
-    "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%"
+    "%cscPath%\v2.0.50727\csc.exe" /out:%fileName%-Net2.0.exe "%filePath%" || set "errorlevel=3"
+    "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%" || set "errorlevel=3"
+    "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%" || set "errorlevel=3"
     
     if not defined is32bit (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%"
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
     ) else (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%"
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
     )
+)
+
+if not "%errorlevel%"=="3" (
+    call :WriteLog "Produced %fileName%-NetX.X.exe in %bcd%"
 )
 
 if "%choice%" LEQ "0" goto Exit
 if "%choice%" GEQ "5" goto Exit
 
 REM TODO: Compiler options
-"%cscPath%\csc.exe" "%filePath%"
+"%cscPath%\csc.exe" "%filePath%" || set "errorlevel=3"
+
+if not "%errorlevel%"=="3" (
+    call :WriteLog "Produced %fileName%.exe in %bcd%"
+)
 
 goto Exit
 
