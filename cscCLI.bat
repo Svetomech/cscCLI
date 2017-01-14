@@ -67,6 +67,8 @@ set "cscPath=C:\Windows\Microsoft.NET"
 call :Is32bitOS
 if "%errorlevel%"=="0" (
     set "is32bit=True"
+) else (
+    set "errorlevel=0"
 )
 
 if not defined is32bit (
@@ -77,7 +79,6 @@ if not defined is32bit (
     set "cscPath=%cscPath%\Framework"
     
     set "ProgramFiles(x86)=%ProgramFiles%"
-    set "errorlevel=0"
 )
 
 echo.
