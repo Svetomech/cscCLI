@@ -66,12 +66,12 @@ set "cscPath=C:\Windows\Microsoft.NET"
 
 call :Is32bitOS
 if "%errorlevel%"=="0" (
-    set "is32bit=True"
+    set "is32Bit=True"
 ) else (
     set "errorlevel=0"
 )
 
-if not defined is32bit (
+if not defined is32Bit (
     call :WriteLog "Detected that 64-bit OS is running"
     set "cscPath=%cscPath%\Framework64"
 ) else (
@@ -96,7 +96,7 @@ if "%choice%"=="2" set "cscPath=%cscPath%\v3.5"
 if "%choice%"=="3" set "cscPath=%cscPath%\v4.0.30319"
 
 if "%choice%"=="4" (
-    if not defined is32bit (
+    if not defined is32Bit (
         set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64"
     ) else (
         set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin"
@@ -109,7 +109,7 @@ if "%choice%"=="5" (
     "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%" || set "errorlevel=3"
     "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%" || set "errorlevel=3"
     
-    if not defined is32bit (
+    if not defined is32Bit (
         "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
     ) else (
         "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
