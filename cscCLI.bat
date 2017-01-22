@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.6.0.0"
+set "ProductVersion=1.6.5.0"
 
 :: Global variables
 set "DesiredAppDirectory=%LocalAppData%\%CompanyName%\%ProductName%"
