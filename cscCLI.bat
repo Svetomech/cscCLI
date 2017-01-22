@@ -115,10 +115,8 @@ if "%choice%"=="5" (
         "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
     )
 )
-if "%choice%"=="5" (
-    if not "%errorlevel%"=="3" (
-        call :WriteLog "Produced %fileName%-NetX.X.exe in %bcd%"
-    )
+if "%choice%"=="5" if not "%errorlevel%"=="3" (
+    call :WriteLog "Produced %fileName%-NetX.X.exe in %bcd%"
 )
 
 if "%choice%" LEQ "0" goto Exit
