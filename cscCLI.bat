@@ -1,11 +1,11 @@
 @echo off
 setlocal
 
-REM Program exit codes:
-REM 0 - everything OK
-REM 1 - no argument passed or file not found
-REM 2 - not a .cs file
-REM 3 - compilation error
+:: PROGRAM EXIT CODES
+:: 0 - everything ok
+:: 1 - no argument passed or file not found
+:: 2 - not a .cs file
+:: 3 - compilation error
 
 :: Debug variables
 set "me=%~n0"
@@ -16,162 +16,185 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.6.5.0"
+set "ProductVersion=1.7.0.0"
+set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
 set "DesiredAppDirectory=%LocalAppData%\%CompanyName%\%ProductName%"
 set "MainConfig=%DesiredAppDirectory%\%ProductName%.txt"
 
-:Main
+
+:Main:
 :: Some initialisation work
 title %ProductName% %ProductVersion% by %CompanyName%
 color 07
 cls
 
-:: Create settings directory
-if not exist "%DesiredAppDirectory%" md "%DesiredAppDirectory%"
-
 :: Read settings
+if not exist "%DesiredAppDirectory%" mkdir "%DesiredAppDirectory%"
 if exist "%MainConfig%" (
     call :LoadSetting "ProductVersion" SettingsProductVersion
 )
 
 :: Check version
-if "%SettingsProductVersion%" GEQ "%ProductVersion%" (
-    call :WriteLog "Up to date"
-) else (
+if "%SettingsProductVersion%" LSS "%ProductVersion%" (
     call :WriteLog "Outdated version, updating now..."
-
     call :SaveSetting "ProductVersion" "%ProductVersion%"
+) else (
+    call :WriteLog "Up to date"
 )
 
 :: Handle console arguments
-set "filePath=%~f1"
+set "csFile=%~f1"
 
-if not defined filePath (
-    call :WriteLog "Please, do drag and drop a .cs file onto me"
-    set "errorlevel=1" && goto Exit
+if not defined csFile (
+    call :WriteLog "Please, drag and drop a C# source file onto me"
+    call :Exit "1"
 )
 
-call :IsFileValid "%filePath%"
+call :IsFileValid "%csFile%"
 if not "%errorlevel%"=="0" (
-    call :WriteLog "Not a .cs file"
-    goto Exit
-) else (
-    call :WriteLog "Found %filePath%"
+    call :WriteLog "Not a C# source file"
+    call :Exit "%errorlevel%"
 )
 
-:: Choose csc executable
-set "cscPath=C:\Windows\Microsoft.NET"
+call :WriteLog "Found %csFile%"
+
+:: Determine framework root
+set "cscDirectory=%SystemRoot%\Microsoft.NET"
 
 call :Is32bitOS
 if "%errorlevel%"=="0" (
-    set "is32Bit=True"
-) else (
-    set "errorlevel=0"
+    set "is32Bit=true"
 )
+set "errorlevel=0"
 
-if not defined is32Bit (
-    call :WriteLog "Detected that 64-bit OS is running"
-    set "cscPath=%cscPath%\Framework64"
-) else (
+if defined is32Bit (
     call :WriteLog "Detected that 32-bit OS is running"
-    set "cscPath=%cscPath%\Framework"
-    
+    set "cscDirectory=%cscDirectory%\Framework"
     set "ProgramFiles(x86)=%ProgramFiles%"
+) else (
+    call :WriteLog "Detected that 64-bit OS is running"
+    set "cscDirectory=%cscDirectory%\Framework64"
 )
 
-echo.
-echo FRAMEWORK VERSION
-echo 1. v2.0
-echo 2. v3.5
-echo 3. v4.0+
-echo 4. v4.5+ (C# 6.0)
-echo 5. All
-echo.
-set /p "choice=    Choose an option: "
+:: Choose framework version
+call :PrintFrameworkVersions
+set /p "frameworkChoice=    Choose an option: "
 
-if "%choice%"=="1" set "cscPath=%cscPath%\v2.0.50727"
-if "%choice%"=="2" set "cscPath=%cscPath%\v3.5"
-if "%choice%"=="3" set "cscPath=%cscPath%\v4.0.30319"
-
-if "%choice%"=="4" (
-    if not defined is32Bit (
-        set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64"
+if "%frameworkChoice%"=="1" set "cscDirectory=%cscDirectory%\v2.0.50727"
+if "%frameworkChoice%"=="2" set "cscDirectory=%cscDirectory%\v3.5"
+if "%frameworkChoice%"=="3" set "cscDirectory=%cscDirectory%\v4.0.30319"
+if "%frameworkChoice%"=="4" (
+    if defined is32Bit (
+        set "cscDirectory=%ProgramFiles(x86)%\MSBuild\14.0\Bin"
     ) else (
-        set "cscPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin"
+        set "cscDirectory=%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64"
     )
 )
+if "%frameworkChoice%"=="5" set "cscDirectory=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn"
 
-call :GetFileNameWithoutExtension "%filePath%" fileName
-if "%choice%"=="5" (
-    "%cscPath%\v2.0.50727\csc.exe" /out:%fileName%-Net2.0.exe "%filePath%" || set "errorlevel=3"
-    "%cscPath%\v3.5\csc.exe" /out:%fileName%-Net3.5.exe "%filePath%" || set "errorlevel=3"
-    "%cscPath%\v4.0.30319\csc.exe" /out:%fileName%-Net4.0.exe "%filePath%" || set "errorlevel=3"
-    
-    if not defined is32Bit (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
+:: Handle choice 6
+call :GetFileNameWithoutExtension "%csFile%" csFileName
+if "%frameworkChoice%"=="6" (
+    "%cscDirectory%\v2.0.50727\csc.exe" /out:%csFileName%-Net2.0.exe "%csFile%" || set "errorlevel=3"
+    "%cscDirectory%\v3.5\csc.exe" /out:%csFileName%-Net3.5.exe "%csFile%" || set "errorlevel=3"
+    "%cscDirectory%\v4.0.30319\csc.exe" /out:%csFileName%-Net4.0.exe "%csFile%" || set "errorlevel=3"
+    if defined is32Bit (
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%csFileName%-Net4.6.exe "%csFile%" || set "errorlevel=3"
     ) else (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%fileName%-Net4.5.exe "%filePath%" || set "errorlevel=3"
+        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%csFileName%-Net4.6.exe "%csFile%" || set "errorlevel=3"
     )
+    "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe" /out:%csFileName%-Net4.7.exe "%csFile%" || set "errorlevel=3"
 )
-if "%choice%"=="5" if not "%errorlevel%"=="3" (
-    call :WriteLog "Produced %fileName%-NetX.X.exe in %bcd%"
+if "%frameworkChoice%"=="6" if not "%errorlevel%"=="3" (
+    call :WriteLineLog "Produced %csFileName%-NetX.X.exe in %cd%"
 )
 
-if "%choice%" LEQ "0" goto Exit
-if "%choice%" GEQ "5" goto Exit
+if "%frameworkChoice%" LEQ "0" call :Exit "%errorlevel%"
+if "%frameworkChoice%" GEQ "6" call :Exit "%errorlevel%"
 
-REM TODO: Compiler options
-"%cscPath%\csc.exe" "%filePath%" || set "errorlevel=3"
+:: Validate choices 1-5
+if not exist "%cscDirectory%\csc.exe" (
+    call :WriteLineLog "Invalid choice! Framework not found"
+    call :Restart "%csFile%"
+)
+
+REM Compiler options
+REM CLI
+REM VS 2017 support 64-bit (is32Bit)
+:: Compile source file
+"%cscDirectory%\csc.exe" "%csFile%" || set "errorlevel=3"
 
 if not "%errorlevel%"=="3" (
-    call :WriteLog "Produced %fileName%.exe in %bcd%"
+    call :WriteLineLog "Produced %csFileName%.exe in %cd%"
 )
 
-goto Exit
+call :Exit "%errorlevel%"
+
+exit
 
 
-:: name, out variableName
-:LoadSetting
+:: PRIVATE
+
+:IsFileValid: "filePath"
+set "errorlevel=0"
+echo %~1 | find /i ".cs" >nul 2>&1 || set "errorlevel=2"
+if not exist "%~1" set "errorlevel=1"
+exit /b %errorlevel%
+
+:PrintFrameworkVersions: ""
+echo.
+echo FRAMEWORK VERSION
+echo 1. v2.0  (C# 2.0)
+echo 2. v3.5  (C# 3.0)
+echo 3. v4.0+ (C# 4.0 - C# 5.0)
+echo 4. v4.6  (C# 6.0, VS 2015)
+echo 5. v4.7  (C# 7.0, VS 2017)
+echo 6. All
+echo.
+exit /b
+
+:: PUBLIC
+
+:LoadSetting: "key" variableName
 for /f "tokens=1  delims=[]" %%n in ('find /i /n "%~1" ^<"%MainConfig%"') do set /a "$n=%%n+1"
 for /f "tokens=1* delims=[]" %%a in ('find /n /v "" ^<"%MainConfig%"^|findstr /b "\[%$n%\]"') do set "%~2=%%b"
-exit /b 0
+exit /b
 
-:: name, value
-:SaveSetting
+:SaveSetting: "key" "value"
 echo %~1    %date% %time%>> "%MainConfig%"
 echo %~2>> "%MainConfig%"
 echo.>> "%MainConfig%"
-exit /b 0
+exit /b
 
-:: message
-:WriteLog
+:WriteLog: "message"
 echo %me%: %~1
-exit /b 0
+exit /b
 
-:: filePath
-:IsFileValid
-if not exist "%~1" set "errorlevel=1"
-echo %~1 | find /i ".cs" > nul || set "errorlevel=2"
+:WriteLineLog: "message"
+echo.
+echo %me%: %~1
+exit /b
+
+:Is32bitOS: ""
+set "errorlevel=0"
+reg query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" >nul 2>&1 || set "errorlevel=1"
 exit /b %errorlevel%
 
-:: filePath, out variableName
-:GetFileName
+:GetFileName: "filePath" variableName
 set "%~2=%~nx1"
-exit /b %errorlevel%
+exit /b
 
-:: filePath, out variableName
-:GetFileNameWithoutExtension
+:GetFileNameWithoutExtension: "filePath" variableName
 set "%~2=%~n1"
-exit /b %errorlevel%
+exit /b
 
-::
-:Is32bitOS
-reg query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > nul || set "errorlevel=1"
-exit /b %errorlevel%
+:Restart: "args="
+call :WriteLog "Restarting..."
+timeout /t 2 >nul 2>&1
+goto Main
 
-::
-:Exit
-timeout 2 > nul
-exit /b %errorlevel%
+:Exit: "errorCode"
+timeout /t 2 /nobreak >nul 2>&1
+exit %~1
