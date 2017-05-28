@@ -1,6 +1,10 @@
 @echo off
 setlocal
 
+REM TODO: Compiler options
+REM TODO: Actual CLI
+REM TODO: VS 2017 is32Bit
+
 :: PROGRAM EXIT CODES
 :: 0 - everything ok
 :: 1 - no argument passed or file not found
@@ -16,19 +20,23 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.7.0.0"
+set "ProductVersion=1.8.0.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
 set "DesiredAppDirectory=%LocalAppData%\%CompanyName%\%ProductName%"
 set "MainConfig=%DesiredAppDirectory%\%ProductName%.txt"
+set "VS2015RelativePath=MSBuild\14.0\Bin"
+set "VS2017RelativePath=Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn"
 
 
 :Main:
 :: Some initialisation work
-title %ProductName% %ProductVersion% by %CompanyName%
+set "title=%ProductName% %ProductVersion% by %CompanyName%"
+title %title%
 color 07
 cls
+chcp 1252 >nul 2>&1
 
 :: Read settings
 if not exist "%DesiredAppDirectory%" mkdir "%DesiredAppDirectory%"
@@ -82,52 +90,49 @@ if defined is32Bit (
 call :PrintFrameworkVersions
 set /p "frameworkChoice=    Choose an option: "
 
+call :IsNumeric "%frameworkChoice%"
+if not "%errorlevel%"=="0" (
+    call :WriteLineLog "Invalid choice! Enter a number"
+    call :Restart "%csFile%"
+)
+if %frameworkChoice% LSS 1 (
+    call :WriteLineLog "Invalid choice! No such option"
+    call :Restart "%csFile%"
+)
+if %frameworkChoice% GTR 5 (
+    call :WriteLineLog "Invalid choice! No such option"
+    call :Restart "%csFile%"
+)
+
+:: Handle user choice
 if "%frameworkChoice%"=="1" set "cscDirectory=%cscDirectory%\v2.0.50727"
 if "%frameworkChoice%"=="2" set "cscDirectory=%cscDirectory%\v3.5"
 if "%frameworkChoice%"=="3" set "cscDirectory=%cscDirectory%\v4.0.30319"
 if "%frameworkChoice%"=="4" (
     if defined is32Bit (
-        set "cscDirectory=%ProgramFiles(x86)%\MSBuild\14.0\Bin"
+        set "cscDirectory=%ProgramFiles(x86)%\%VS2015RelativePath%"
     ) else (
-        set "cscDirectory=%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64"
+        set "cscDirectory=%ProgramFiles(x86)%\%VS2015RelativePath%\amd64"
     )
 )
-if "%frameworkChoice%"=="5" set "cscDirectory=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn"
+if "%frameworkChoice%"=="5" set "cscDirectory=%ProgramFiles(x86)%\%VS2017RelativePath%"
 
-:: Handle choice 6
-call :GetFileNameWithoutExtension "%csFile%" csFileName
-if "%frameworkChoice%"=="6" (
-    "%cscDirectory%\v2.0.50727\csc.exe" /out:%csFileName%-Net2.0.exe "%csFile%" || set "errorlevel=3"
-    "%cscDirectory%\v3.5\csc.exe" /out:%csFileName%-Net3.5.exe "%csFile%" || set "errorlevel=3"
-    "%cscDirectory%\v4.0.30319\csc.exe" /out:%csFileName%-Net4.0.exe "%csFile%" || set "errorlevel=3"
-    if defined is32Bit (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\csc.exe" /out:%csFileName%-Net4.6.exe "%csFile%" || set "errorlevel=3"
-    ) else (
-        "%ProgramFiles(x86)%\MSBuild\14.0\Bin\amd64\csc.exe" /out:%csFileName%-Net4.6.exe "%csFile%" || set "errorlevel=3"
-    )
-    "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe" /out:%csFileName%-Net4.7.exe "%csFile%" || set "errorlevel=3"
-)
-if "%frameworkChoice%"=="6" if not "%errorlevel%"=="3" (
-    call :WriteLineLog "Produced %csFileName%-NetX.X.exe in %cd%"
-)
-
-if "%frameworkChoice%" LEQ "0" call :Exit "%errorlevel%"
-if "%frameworkChoice%" GEQ "6" call :Exit "%errorlevel%"
-
-:: Validate choices 1-5
 if not exist "%cscDirectory%\csc.exe" (
     call :WriteLineLog "Invalid choice! Framework not found"
     call :Restart "%csFile%"
 )
 
-REM Compiler options
-REM CLI
-REM VS 2017 support 64-bit (is32Bit)
 :: Compile source file
-"%cscDirectory%\csc.exe" "%csFile%" || set "errorlevel=3"
+call :GetFileNameWithoutExtension "%csFile%" csFileName
+"%cscDirectory%\csc.exe" /warn:0 /nologo "%csFile%" >stdout.txt 2>&1 || set "errorlevel=3"
 
 if not "%errorlevel%"=="3" (
+    erase stdout.txt
+    call :AddToTitle "SUCCESS"
     call :WriteLineLog "Produced %csFileName%.exe in %cd%"
+) else (
+    call :AddToTitle "FAILURE"
+    call :WriteLineLog "Check stdout.txt in %cd%"
 )
 
 call :Exit "%errorlevel%"
@@ -151,7 +156,6 @@ echo 2. v3.5  (C# 3.0)
 echo 3. v4.0+ (C# 4.0 - C# 5.0)
 echo 4. v4.6  (C# 6.0, VS 2015)
 echo 5. v4.7  (C# 7.0, VS 2017)
-echo 6. All
 echo.
 exit /b
 
@@ -188,6 +192,20 @@ exit /b
 
 :GetFileNameWithoutExtension: "filePath" variableName
 set "%~2=%~n1"
+exit /b
+
+:IsNumeric: "input"
+set "errorlevel=0"
+set "input=%~1"
+if "%input:~0,1%"=="-" set "input=%input:~1%"
+set "var="&for /f "delims=0123456789" %%i in ("%input%") do set "var=%%i"
+if defined var set "errorlevel=1"
+set "var="
+set "input="
+exit /b %errorlevel%
+
+:AddToTitle: "text"
+title %title% ^| %~1
 exit /b
 
 :Restart: "args="
