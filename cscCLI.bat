@@ -2,7 +2,6 @@
 setlocal
 
 REM TODO: Compiler options
-REM TODO: Actual CLI
 REM TODO: VS 2017 is32Bit
 
 :: PROGRAM EXIT CODES
@@ -20,7 +19,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.8.0.0"
+set "ProductVersion=1.8.5.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -28,6 +27,7 @@ set "DesiredAppDirectory=%LocalAppData%\%CompanyName%\%ProductName%"
 set "MainConfig=%DesiredAppDirectory%\%ProductName%.txt"
 set "VS2015RelativePath=MSBuild\14.0\Bin"
 set "VS2017RelativePath=Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn"
+set "CompilerOptions="
 
 
 :Main:
@@ -54,6 +54,7 @@ if "%SettingsProductVersion%" LSS "%ProductVersion%" (
 
 :: Handle console arguments
 set "csFile=%~f1"
+set "frameworkChoice=%~2"
 
 if not defined csFile (
     call :WriteLog "Please, drag and drop a C# source file onto me"
@@ -88,7 +89,11 @@ if defined is32Bit (
 
 :: Choose framework version
 call :PrintFrameworkVersions
-set /p "frameworkChoice=    Choose an option: "
+if not defined frameworkChoice (
+    set /p "frameworkChoice=    Choose an option: "
+) else (
+    echo Choose an option: %frameworkChoice%
+)
 
 call :IsNumeric "%frameworkChoice%"
 if not "%errorlevel%"=="0" (
@@ -124,7 +129,7 @@ if not exist "%cscDirectory%\csc.exe" (
 
 :: Compile source file
 call :GetFileNameWithoutExtension "%csFile%" csFileName
-"%cscDirectory%\csc.exe" /warn:0 /nologo "%csFile%" >stdout.txt 2>&1 || set "errorlevel=3"
+"%cscDirectory%\csc.exe" /warn:0 /nologo %CompilerOptions% "%csFile%" >stdout.txt 2>&1 || set "errorlevel=3"
 
 if not "%errorlevel%"=="3" (
     erase stdout.txt
