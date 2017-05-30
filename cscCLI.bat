@@ -1,9 +1,6 @@
 @echo off
 setlocal
 
-REM TODO: Compiler options
-REM TODO: VS 2017 is32Bit
-
 :: PROGRAM EXIT CODES
 :: 0 - everything ok
 :: 1 - no argument passed or file not found
@@ -19,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.8.5.0"
+set "ProductVersion=1.9.0.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -27,7 +24,7 @@ set "DesiredAppDirectory=%LocalAppData%\%CompanyName%\%ProductName%"
 set "MainConfig=%DesiredAppDirectory%\%ProductName%.txt"
 set "VS2015RelativePath=MSBuild\14.0\Bin"
 set "VS2017RelativePath=Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn"
-set "CompilerOptions="
+set "CompilerOptions=/warn:0 /nologo"
 
 
 :Main:
@@ -55,6 +52,7 @@ if "%SettingsProductVersion%" LSS "%ProductVersion%" (
 :: Handle console arguments
 set "csFile=%~f1"
 set "frameworkChoice=%~2"
+set "compilerOptionsExtra=%~3"
 
 if not defined csFile (
     call :WriteLog "Please, drag and drop a C# source file onto me"
@@ -128,13 +126,14 @@ if not exist "%cscDirectory%\csc.exe" (
 )
 
 :: Compile source file
-call :GetFileNameWithoutExtension "%csFile%" csFileName
-"%cscDirectory%\csc.exe" /warn:0 /nologo %CompilerOptions% "%csFile%" >stdout.txt 2>&1 || set "errorlevel=3"
+set "fullCompilerOptions=%CompilerOptions% %compilerOptionsExtra%"
+call :GetCsFileName "%csFile%" "%fullCompilerOptions%" csFileName
+"%cscDirectory%\csc.exe" %fullCompilerOptions% "%csFile%" >stdout.txt 2>&1 || set "errorlevel=3"
 
 if not "%errorlevel%"=="3" (
     erase stdout.txt
     call :AddToTitle "SUCCESS"
-    call :WriteLineLog "Produced %csFileName%.exe in %cd%"
+    call :WriteLineLog "Produced %csFileName% in %cd%"
 ) else (
     call :AddToTitle "FAILURE"
     call :WriteLineLog "Check stdout.txt in %cd%"
@@ -162,6 +161,21 @@ echo 3. v4.0+ (C# 4.0 - C# 5.0)
 echo 4. v4.6  (C# 6.0, VS 2015)
 echo 5. v4.7  (C# 7.0, VS 2017)
 echo.
+exit /b
+
+:GetCsFileName: "filePath" "compilerOptions" variableName
+set "_compilerOptions=%~2"
+if not "%_compilerOptions:/out:=%"=="%_compilerOptions%" (
+    set "%~3=%_compilerOptions:*/out:=%"
+    exit /b
+)
+call :GetFileNameWithoutExtension "%~1" %~3
+if not "%_compilerOptions:/target:library=%"=="%_compilerOptions%" (
+    call set "%~3=%%%~3%%.dll"
+) else (
+    call set "%~3=%%%~3%%.exe"
+)
+set "_compilerOptions="
 exit /b
 
 :: PUBLIC
@@ -201,12 +215,12 @@ exit /b
 
 :IsNumeric: "input"
 set "errorlevel=0"
-set "input=%~1"
-if "%input:~0,1%"=="-" set "input=%input:~1%"
-set "var="&for /f "delims=0123456789" %%i in ("%input%") do set "var=%%i"
-if defined var set "errorlevel=1"
-set "var="
-set "input="
+set "_input=%~1"
+if "%_input:~0,1%"=="-" set "_input=%_input:~1%"
+set "_var="&for /f "delims=0123456789" %%i in ("%_input%") do set "_var=%%i"
+if defined _var set "errorlevel=1"
+set "_var="
+set "_input="
 exit /b %errorlevel%
 
 :AddToTitle: "text"
