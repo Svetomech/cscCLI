@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.9.3.0"
+set "ProductVersion=1.9.4.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -132,10 +132,10 @@ call :GetCsFileName "%csFile%" "%fullCompilerOptions%" csFileName
 
 if not "%errorlevel%"=="3" (
     erase stdout.txt
-    call :AddToTitle "SUCCESS"
+    title %title% ^| SUCCESS
     call :WriteLineLog "Produced %csFileName% in %cd%"
 ) else (
-    call :AddToTitle "FAILURE"
+    title %title% ^| FAILURE
     call :WriteLineLog "Check stdout.txt in %cd%"
 )
 
@@ -213,10 +213,6 @@ if defined _var set "errorlevel=1"
 set "_var="
 set "_input="
 exit /b %errorlevel%
-
-:AddToTitle: "text"
-title %title% ^| %~1
-exit /b
 
 :Restart: "args="
 timeout /t 2 >nul 2>&1
