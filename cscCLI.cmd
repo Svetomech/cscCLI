@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.9.2.0"
+set "ProductVersion=1.9.3.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -219,7 +219,6 @@ title %title% ^| %~1
 exit /b
 
 :Restart: "args="
-echo %me%: Restarting...
 timeout /t 2 >nul 2>&1
 goto Main
 
