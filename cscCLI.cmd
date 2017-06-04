@@ -204,14 +204,6 @@ set "errorlevel=0"
 reg query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" >nul 2>&1 || set "errorlevel=1"
 exit /b %errorlevel%
 
-:GetFileName: "filePath" variableName
-set "%~2=%~nx1"
-exit /b
-
-:GetFileNameWithoutExtension: "filePath" variableName
-set "%~2=%~n1"
-exit /b
-
 :IsNumeric: "input"
 set "errorlevel=0"
 set "_input=%~1"
