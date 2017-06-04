@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.9.1.0"
+set "ProductVersion=1.9.2.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -170,9 +170,9 @@ if not "%_compilerOptions:/out:=%"=="%_compilerOptions%" (
     exit /b
 )
 if not "%_compilerOptions:/target:library=%"=="%_compilerOptions%" (
-    call set "%~3=%%%~n3%%.dll"
+    set "%~3=%~n1.dll"
 ) else (
-    call set "%~3=%%%~n3%%.exe"
+    set "%~3=%~n1.exe"
 )
 set "_compilerOptions="
 exit /b
