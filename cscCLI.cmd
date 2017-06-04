@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.9.4.0"
+set "ProductVersion=1.9.5.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -87,10 +87,10 @@ if defined is32Bit (
 
 :: Choose framework version
 call :PrintFrameworkVersions
-if not defined frameworkChoice (
-    set /p "frameworkChoice=    Choose an option: "
+if defined frameworkChoice (
+    call :WriteLog "Choose an option: %frameworkChoice%"
 ) else (
-    echo Choose an option: %frameworkChoice%
+    set /p "frameworkChoice=    %me%: Choose an option: "
 )
 
 call :IsNumeric "%frameworkChoice%"
@@ -154,12 +154,12 @@ exit /b %errorlevel%
 
 :PrintFrameworkVersions: ""
 echo.
-echo FRAMEWORK VERSION
-echo 1. v2.0  (C# 2.0)
-echo 2. v3.5  (C# 3.0)
-echo 3. v4.0+ (C# 4.0 - C# 5.0)
-echo 4. v4.6  (C# 6.0, VS 2015)
-echo 5. v4.7  (C# 7.0, VS 2017)
+echo %me%: FRAMEWORK VERSION
+echo %me%: 1. v2.0  (C# 2.0)
+echo %me%: 2. v3.5  (C# 3.0)
+echo %me%: 3. v4.0+ (C# 4.0 - C# 5.0)
+echo %me%: 4. v4.6  (C# 6.0, VS 2015)
+echo %me%: 5. v4.7  (C# 7.0, VS 2017)
 echo.
 exit /b
 
