@@ -16,7 +16,7 @@ set "errorlevel=0"
 :: Application variables
 set "CompanyName=Svetomech"
 set "ProductName=cscCLI"
-set "ProductVersion=1.9.0.0"
+set "ProductVersion=1.9.1.0"
 set "ProductRepository=https://github.com/Svetomech/cscCLI"
 
 :: Global variables
@@ -169,11 +169,10 @@ if not "%_compilerOptions:/out:=%"=="%_compilerOptions%" (
     set "%~3=%_compilerOptions:*/out:=%"
     exit /b
 )
-call :GetFileNameWithoutExtension "%~1" %~3
 if not "%_compilerOptions:/target:library=%"=="%_compilerOptions%" (
-    call set "%~3=%%%~3%%.dll"
+    call set "%~3=%%%~n3%%.dll"
 ) else (
-    call set "%~3=%%%~3%%.exe"
+    call set "%~3=%%%~n3%%.exe"
 )
 set "_compilerOptions="
 exit /b
@@ -228,7 +227,7 @@ title %title% ^| %~1
 exit /b
 
 :Restart: "args="
-call :WriteLog "Restarting..."
+echo %me%: Restarting...
 timeout /t 2 >nul 2>&1
 goto Main
 
