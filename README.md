@@ -1,4 +1,18 @@
 # cscCLI
-Command Line Interface for C# compiler
+Compile a C# source file with any .NET Framework version installed on PC
 
-**Usage:** *drag&drop™ a .cs file onto cscCLI and see what happens*
+**Usage:** *`cscCLI <filePath> <frameworkChoice> <compilerOptions>`*
+
+Only *filePath* is required. *frameworkVersion* can be chosen interactively. For *compilerOptions* see [this](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/command-line-building-with-csc-exe#sample-command-lines-for-the-c-compiler).
+
+**Usage #2:** *drag&drop™ a C# source file onto cscCLI and see what happens*
+
+**Notes:**
+
+* See available framework choices [here](https://github.com/Svetomech/cscCLI/blob/master/cscCLI.cmd#L157).
+* cscCLI passes [some compiler options](https://github.com/Svetomech/cscCLI/blob/master/cscCLI.cmd#L27) by default.
+* cscCLI has [return codes](https://github.com/Svetomech/cscCLI/blob/master/cscCLI.cmd#L4) for external usage.
+
+**TODO:** 
+
+* Example script utilizing cscCLI capabilities.
